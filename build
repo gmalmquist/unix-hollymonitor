@@ -145,7 +145,7 @@ def main(args):
       '-D%s=%s' % ('SCRIPT_DIR', os.path.basename(bin_cgi)),
       '-D%s=%s' % ('HTML_DIR', os.path.basename(bin_html)),
       '-D%s=%s' % ('LIB_DIR', os.path.basename(bin_lib)),
-      '-D%s=%s' % ('SIZE', dict_get(VARS, 'size', '600')),
+      '-D%s=%s' % ('SIZE', dict_get(VARS, 'size', '600px')),
   ])
   tpm_command.extend(['-o', bin_html]) 
   bin_exec(tpm_command, pipe=False, cwd=html_path)
