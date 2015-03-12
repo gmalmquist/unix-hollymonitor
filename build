@@ -1,0 +1,136 @@
+#!/usr/bin/env python
+
+from subprocess import Popen, PIPE, STDOUT
+from urlparse import urlparse
+import os
+import shutil
+import sys
+import urllib2
+
+SUPPORT_DIR = '.build_tools'
+
+def support_path(*paths):
+  return os.path.abspath(os.path.join(SUPPORT_DIR, *paths))
+
+def bin_exec(command, pipe=True, async=False, cwd=os.environ['PWD']):
+  if pipe:
+    p = Popen(command, stdout=PIPE, stderr=STDOUT, cwd=cwd)
+    out, err = p.communicate()
+    return out, err, p.returncode
+  else:
+    p = Popen(command, cwd=cwd)
+    if async:
+      return 0
+    p.wait()
+    return p.returncode
+
+class Requirement(object):
+  def __init__(self, name):
+    self.name = name
+  def is_installed(self):
+    return os.path.exists(support_path(self.name))
+  def install(self):
+    raise RuntimeError('install() method not implemented')
+
+class RemoteFile(Requirement):
+  def __init__(self, name, url):
+    super(RemoteFile, self).__init__(name)
+    self.url = url
+  def install(self):
+    response = urllib2.urlopen(self.url)
+    data = response.read()
+    outfile = open(support_path(self.name), 'wb')
+    outfile.write(data)
+    outfile.close()
+
+class Library(Requirement):
+  def __init__(self, name, *urls):
+    super(Library, self).__init__(name)
+    self.urls = urls
+  def install(self):
+    for url in self.urls:
+      uname = urlparse(url).path
+      if uname.endswith('/'):
+        uname = uname[:-1]
+      if '/' in uname:
+        uname = uname[uname.rfind('/')+1:]
+      response = urllib2.urlopen(url)
+      data = response.read()
+      if not os.path.exists(support_path(self.name)):
+        os.makedirs(support_path(self.name))
+      outfile = open(support_path(self.name, uname), 'wb')
+      outfile.write(data)
+      outfile.close()
+
+class GitRepo(Requirement):
+  def __init__(self, name, url, build_command=None):
+    super(GitRepo, self).__init__(name)
+    self.repo = url
+    self.build_command = build_command
+  def install(self):
+    r = bin_exec(['git', 'clone', self.repo, support_path(self.name)], pipe=False)
+    if r != 0: return False
+    if self.build_command:
+      return self.build()
+    return True
+  def build(self):
+    return bin_exec(self.build_command, cwd=support_path(self.name), pipe=False) == 0
+
+REQUIREMENTS = [
+  GitRepo('tpm', 'https://github.com/gmalmquist/too-powerful-macros.git',
+          build_command = ['./pants', 'bundle', 'src/java']),
+  RemoteFile('jquery.js', 'http://code.jquery.com/jquery-1.11.2.min.js'),
+  RemoteFile('ko.js', 'http://knockoutjs.com/downloads/knockout-3.3.0.js'),
+]
+
+def get_files(dir):
+  ls = []
+  for f in os.listdir(dir):
+    path = os.path.join(dir, f)
+    if os.path.isdir(path):
+      ls.extend(get_files(path))
+    else:
+      ls.append(path)
+  return ls
+
+def main(args):
+  binary_path = args[0]
+  args = args[1:]
+  if 'clean' in args and os.path.exists(SUPPORT_DIR):
+    shutil.rmtree(SUPPORT_DIR)
+  if not os.path.exists(SUPPORT_DIR):
+    os.makedirs(SUPPORT_DIR)
+  for req in REQUIREMENTS:
+    if not req.is_installed():
+      print 'Installing', req.name
+      req.install()
+  if os.path.exists('bin'):
+    shutil.rmtree('bin')
+  os.makedirs('bin')
+
+  tpm_command = ['java', '-jar', support_path('tpm', 'dist', 'tpm.jar'),]
+
+  jar_path = support_path('tpm', 'dist', 'tpm.jar')
+  if not os.path.exists(jar_path):
+    print 'tpm.jar not found, trying version on PATH.'
+    tpm_command = ['tpm',] # hope they have it installed.
+
+  html_path = os.path.join('src', 'html')
+  html_sources = get_files(html_path)
+  html_sources = [s[len(html_path)+1:] for s in html_sources]
+
+  tpm_command.extend(html_sources)
+  tpm_command.extend(['-o', os.path.abspath(os.path.join('bin', 'html'))]) 
+  bin_exec(tpm_command, pipe=False, cwd=html_path)
+
+  os.makedirs(os.path.join('bin', 'lib'))
+  for lib in ['jquery.js', 'ko.js', 'ggeom.js']:
+    if not os.path.exists(support_path(lib)):
+      print 'Warning: library "%s" not found.' % lib
+      continue
+    shutil.copyfile(support_path(lib), os.path.join('bin', 'lib', lib))
+
+  shutil.copytree(os.path.join('src', 'cgi'), os.path.join('bin', 'cgi'))
+
+if __name__ == '__main__':
+  main(sys.argv)

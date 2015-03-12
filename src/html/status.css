@@ -1,0 +1,76 @@
+body {
+  font-family: sans-serif;
+}
+.device {
+  padding: 1em;
+}
+table {
+  background-color: #EEE;
+}
+td {
+  padding: 1.0ex;
+}
+th {
+  padding: 1.0ex;
+  text-align: left;
+}
+th + th {
+  text-align: center;
+}
+td + td {
+  text-align: center;
+}
+td.temp {
+  font-weight: bold;
+  font-family: monospace;
+  font-size: 1.2em;
+}
+.device-name {
+  display: block;
+  font-weight: bold;
+}
+.device-description {
+  display: block;
+} 
+.usage-wrap {
+  max-width: 400px;
+  min-height: 1em;
+  text-align: left;
+  font-family: monospace;
+  font-weight: bold;
+}
+.usage-box {
+  display: inline-block;
+  margin: 0.5ex;
+  margin-left: 2.0em;
+  margin-right: 0.5em;
+  width: 6em;
+}
+.visualizer {
+  position: relative;
+  background-color: #000000;
+  margin: 1em;
+  width: 600px;
+  height: 600px;
+}
+.usage-display {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0.8;
+}
+.perf-cube-wrap {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.streams-wrap {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.temp-chart-wrap {
+  position: absolute;
+  left: 0;
+  top: 0;
+}

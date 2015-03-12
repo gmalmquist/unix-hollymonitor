@@ -1,0 +1,271 @@
+<html>
+<head>
+  <title>Hardware Status</title>
+  <script type="text/javascript">
+    var SCRIPT_DIR = 'http://73.207.137.157:8042/scripts';
+    SCRIPT_DIR = 'http://73.207.137.157/scripts';
+    SCRIPT_DIR = 'http://192.168.11.55/scripts';
+    SCRIPT_DIR = location.protocol + '//' + location.host + '/scripts';
+  </script>
+  <script type="text/javascript" src="../lib/jquery.js"></script>
+  <script type="text/javascript" src="../lib/knockout.js"></script>
+  <script type="text/javascript" src="../lib/color.js"></script>
+  <script type="text/javascript" src="../lib/ggeom.js"></script>
+  <link rel="stylesheet" type="text/css" href="status.css"></link>
+</head>
+<body>
+<h1>Hardware Status</h1>
+
+<div class="visualizer">
+  <div class="streams-wrap">
+    <canvas id="streams-can" width="600px" height="600px"></canvas>
+  </div>
+
+  <div class="perf-cube-wrap">
+    <canvas id="perf-cube-can" width="600px" height="600px"></canvas>
+  </div>
+
+  <div id="usage-display" class="usage-display">
+    <div class="usage-wrap">
+
+      <!-- ko foreach: Page.usages -->
+        <div class="usage-box" data-bind="style: {
+            color: (typeof(color) === 'undefined' ? '#888888' : color),
+          }">
+          <span class="name" data-bind="text: name"></span>:
+          <span class="usage" data-bind="text: usage"></span>%
+        </div>
+      <!-- /ko -->
+
+    </div>
+
+    <div class="usage-graph-wrap">
+      <canvas id="usage-graph-can" width="300px" height="200px"></canvas>
+    </div>
+  </div>
+
+  <div class="temp-chart-wrap">
+    <canvas id="temp-chart-can" width="600px" height="600px"></canvas>
+  </div>
+</div>
+
+<!-- ko foreach: devices -->
+<div class="device">
+  <span class="device-name" data-bind="text: name"></span>
+  <span class="device-description" data-bind="text: description"></span>
+  <table>
+    <tr><th>Core</th><th>Temperature</th><th>Details</th></tr>
+    <!-- ko foreach: temps -->
+    <tr>
+      <td class="name" data-bind="text: name"></td>
+      <td class="temp" data-bind="text: temp, style: {
+        backgroundColor: ColorFor(temp, info),
+      }"></td>
+      <td class="info" data-bind="foreach: Object.keys(info)">
+        <span data-bind="text: $data"></span> =
+        <span data-bind="text: $parent.info[$data]"></span>,
+      </td>
+    </tr>
+    <!-- /ko -->
+  </table>
+</div>
+<!-- /ko -->
+
+<div class="controls">
+  <ul>
+    <li>C - toggle cube</li>
+    <li>F - full-screen</li>
+    <li>R - cpu graph coloring</li>
+    <li>S - toggle text streams</li>
+    <li>T - toggle temperature bars</li>
+    <li>U - toggle cpu graphs</li>
+  </ul>
+</div>
+
+<!-- <span data-bind="text: status"></span> -->
+
+<script type="text/javascript" src="usage-graph.js"></script>
+
+<script type="text/javascript">
+var Page = {
+  devices: ko.observableArray([]),
+  usages: ko.observableArray([]),
+  startTime: new Date().getTime(),
+  usageStream: {},
+  status: ko.observable(''),
+  scrollCode: ko.observableArray([]),
+  processes: ko.observableArray([]),
+};
+
+function getTime() {
+  return new Date().getTime() - Page.startTime;
+}
+
+function ColorFor(temp, info) {
+  var keys = ['crit', 'high', 'emerg'];
+  var vals = [];
+  for (var i = 0; i < keys.length; i++) {
+    if (typeof(info[keys[i]]) !== 'undefined') {
+      vals.push(ParseTemp(info[keys[i]]));
+    }
+  }
+  vals.sort();
+  var high = 0;
+  var crit = 0;
+  var emer = 0;
+  for (var i = 0; i < 3 && i < vals.length; i++) {
+    var v = vals[vals.length-1-i];
+    if (i <= 2) emer = v;
+    if (i <= 1) crit = v;
+    if (i <= 0) high = v;
+  }
+
+  temp = ParseTemp(temp);
+
+  //console.log(temp + ', ' + high + ', ' + crit + ', ' + emer);
+
+  if (temp < high*0.60) return '#00DD00';
+  if (temp < high*0.80) return '#AAEE00';
+  if (temp < high) return '#ffAA00';
+  if (temp < crit) return '#ff0000';
+  if (temp < emer) return '#ff00ff';
+  return '#FFFFFF';
+}
+
+function ParseTemp(temp) {
+  temp = temp + '';
+  while (temp.match(/.*?[0-9]+[.][0-9]+[^0-9]+/)) {
+    temp = temp.substring(0, temp.length-1);
+  }
+  return parseFloat(temp);
+}
+
+function UpdateTemperature() {
+  Page.status('refreshing ...');
+  $.getJSON(SCRIPT_DIR + '/sensors.py', {}, 
+      function(data) {
+        Page.devices(data);
+        Page.status('');
+        setTimeout(UpdateTemperature, 1500);
+      }
+  ); 
+}
+
+function UpdateUsage() {
+  $.ajax({
+      url: SCRIPT_DIR + '/cpu.py',
+      dataType: 'json',
+      timeout: 10000,
+      success: function(data) {
+        Page.usages(data);
+        UpdateUsageGraph();
+        setTimeout(UpdateUsage, 1500);
+      },
+  });
+}
+
+function UpdateCode() {
+  $.get(SCRIPT_DIR + '/../lib/ggeom.js', {}, function(data) {
+    Page.scrollCode(data.split('\n'));
+  });
+}
+
+function UpdateProcs() {
+  $.ajax({
+    url: SCRIPT_DIR + '/ps.py',
+    dataType: 'json',
+    success: function(data) {
+      Page.processes(data);
+      setTimeout(UpdateProcs, 2000);
+    },
+  });
+}
+
+ko.applyBindings(Page);
+
+UpdateUsageGraph();
+UpdateTemperature();
+UpdateUsage();
+UpdateCode();
+UpdateProcs();
+
+setInterval(function() {
+  UpdateUsageGraph(false);
+}, 500);
+
+$(document).keydown(function(e) {
+  function Scene(obj) {
+    return function() {
+      obj.visible = !obj.visible;
+    };
+  };
+
+  function Element(id) {
+    return function() {
+      var el = $(id);
+      if (el.is(':visible'))
+        el.hide();
+      else
+        el.show();
+    };
+  };
+
+  function FullScreen() {
+    return function() {
+      var win = $(window);
+      var doc = $(document);
+      var vis = $('.visualizer');
+      vis.offset({
+        'left': 0,
+        'top': 0,
+      });
+
+      var w = win.width();
+      var h = window.innerHeight;//win.height();
+
+      vis.width(w);
+      vis.height(h);
+
+      var scenes = [ STREAMS_SCENE, CUBE_SCENE, TEMP_SCENE, ];
+
+      for (var i = 0; i < scenes.length; i++) {
+        var can = scenes[i].canvas;
+        can.width = w;
+        can.height = h;
+        $(can).width(w);
+        $(can).height(h);
+      }
+    };
+  };
+
+  function PleasantCPU() {
+    return function() {
+      USAGE_SCENE.pleasant = !USAGE_SCENE.pleasant;
+      UpdateUsageGraph(false);
+    };
+  };
+
+  var toggles = {
+    'S': Scene(STREAMS_SCENE),
+    'C': Scene(CUBE_SCENE),
+    'T': Scene(TEMP_SCENE),
+    'U': Element('#usage-display'),
+    'F': FullScreen(),
+    'R': PleasantCPU(),
+  };
+
+  var keys = Object.keys(toggles);
+  for (var i = 0; i < keys.length; i++) {
+    if (e.which == keys[i].charCodeAt(0)) {
+      toggles[keys[i]]();
+    }
+  }
+});
+</script>
+
+<script type="text/javascript" src="cube-display.js"></script>
+<script type="text/javascript" src="streams-display.js"></script>
+<script type="text/javascript" src="temp-chart-display.js"></script>
+
+</body>
+</html>

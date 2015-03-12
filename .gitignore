@@ -1,0 +1,3 @@
+.build_tools/
+bin/
+*.swp
