@@ -81,6 +81,8 @@ REQUIREMENTS = [
           build_command = ['./pants', 'bundle', 'src/java']),
   RemoteFile('jquery.js', 'http://code.jquery.com/jquery-1.11.2.min.js'),
   RemoteFile('ko.js', 'http://knockoutjs.com/downloads/knockout-3.3.0.js'),
+  RemoteFile('ggeom.js', 'https://raw.githubusercontent.com/gmalmquist/unix-hollymonitor/master/src/lib/ggeom.js'),
+  RemoteFile('color.js', 'https://raw.githubusercontent.com/eligrey/color.js/master/color.min.js'),
 ]
 
 def get_files(dir):
