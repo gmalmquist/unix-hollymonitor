@@ -159,5 +159,17 @@ def main(args):
 
   shutil.copytree(os.path.join('src', 'cgi'), bin_cgi)
 
+  if 'install' in VARS:
+    for src in get_files('bin'):
+      dst = os.path.join(VARS['install'], os.path.relpath(src, 'bin'))
+      par = os.path.dirname(dst)
+      if not os.path.exists(par):
+        os.makedirs(par)
+      if os.path.exists(dst):
+        print 'Replacing file', dst
+        os.remove(dst)
+      print 'Installing', dst
+      shutil.copyfile(src, dst)
+
 if __name__ == '__main__':
   main(sys.argv)
