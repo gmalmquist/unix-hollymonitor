@@ -126,7 +126,7 @@ def main(args):
   bin_exec(tpm_command, pipe=False, cwd=html_path)
 
   os.makedirs(os.path.join('bin', 'lib'))
-  for lib in ['jquery.js', 'ko.js', 'ggeom.js']:
+  for lib in [f for f in os.listdir(SUPPORT_DIR) if f.endswith('.js')]:
     if not os.path.exists(support_path(lib)):
       print 'Warning: library "%s" not found.' % lib
       continue
