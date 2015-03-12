@@ -95,9 +95,28 @@ def get_files(dir):
       ls.append(path)
   return ls
 
+def dict_get(map, var, value):
+  if var in map: return map[var]
+  return value
+
 def main(args):
   binary_path = args[0]
   args = args[1:]
+
+  VARS = {}
+
+  for arg in args:
+    if '=' in arg:
+      key, val = arg.split('=')
+      VARS[key] = val
+
+  def bin_path(*paths):
+    return os.path.abspath(os.path.join('bin', *paths))
+
+  bin_html = bin_path(dict_get(VARS, 'html', 'html'))
+  bin_cgi  = bin_path(dict_get(VARS, 'cgi', 'cgi'))
+  bin_lib  = bin_path(dict_get(VARS, 'lib', 'lib')) 
+
   if 'clean' in args and os.path.exists(SUPPORT_DIR):
     shutil.rmtree(SUPPORT_DIR)
   if not os.path.exists(SUPPORT_DIR):
@@ -122,17 +141,23 @@ def main(args):
   html_sources = [s[len(html_path)+1:] for s in html_sources]
 
   tpm_command.extend(html_sources)
-  tpm_command.extend(['-o', os.path.abspath(os.path.join('bin', 'html'))]) 
+  tpm_command.extend([
+      '-D%s=%s' % ('SCRIPT_DIR', os.path.basename(bin_cgi)),
+      '-D%s=%s' % ('HTML_DIR', os.path.basename(bin_html)),
+      '-D%s=%s' % ('LIB_DIR', os.path.basename(bin_lib)),
+      '-D%s=%s' % ('SIZE', dict_get(VARS, 'size', '600')),
+  ])
+  tpm_command.extend(['-o', bin_html]) 
   bin_exec(tpm_command, pipe=False, cwd=html_path)
 
-  os.makedirs(os.path.join('bin', 'lib'))
+  os.makedirs(bin_lib)
   for lib in [f for f in os.listdir(SUPPORT_DIR) if f.endswith('.js')]:
     if not os.path.exists(support_path(lib)):
       print 'Warning: library "%s" not found.' % lib
       continue
     shutil.copyfile(support_path(lib), os.path.join('bin', 'lib', lib))
 
-  shutil.copytree(os.path.join('src', 'cgi'), os.path.join('bin', 'cgi'))
+  shutil.copytree(os.path.join('src', 'cgi'), bin_cgi)
 
 if __name__ == '__main__':
   main(sys.argv)

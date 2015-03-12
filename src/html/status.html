@@ -1,16 +1,24 @@
 <html>
 <head>
-  <title>Hardware Status</title>
+  <title>Unix Hollywood-style Monitor</title>
+  <!--
+  #ifndef SCRIPT_DIR
+    #define SCRIPT_DIR scripts
+  #endif
+  #ifndef SIZE
+    #define SIZE 600
+  #endif
+  #ifndef LIB_DIR
+    #define LIB_DIR lib
+  #endif
+  -->
   <script type="text/javascript">
-    var SCRIPT_DIR = 'http://73.207.137.157:8042/scripts';
-    SCRIPT_DIR = 'http://73.207.137.157/scripts';
-    SCRIPT_DIR = 'http://192.168.11.55/scripts';
-    SCRIPT_DIR = location.protocol + '//' + location.host + '/scripts';
+    var SCRIPT_DIR = location.protocol + '//' + location.host + '/SCRIPT_DIR';
   </script>
-  <script type="text/javascript" src="../lib/jquery.js"></script>
-  <script type="text/javascript" src="../lib/knockout.js"></script>
-  <script type="text/javascript" src="../lib/color.js"></script>
-  <script type="text/javascript" src="../lib/ggeom.js"></script>
+  <script type="text/javascript" src="../LIB_DIR/jquery.js"></script>
+  <script type="text/javascript" src="../LIB_DIR/knockout.js"></script>
+  <script type="text/javascript" src="../LIB_DIR/color.js"></script>
+  <script type="text/javascript" src="../LIB_DIR/ggeom.js"></script>
   <link rel="stylesheet" type="text/css" href="status.css"></link>
 </head>
 <body>
@@ -18,11 +26,11 @@
 
 <div class="visualizer">
   <div class="streams-wrap">
-    <canvas id="streams-can" width="600px" height="600px"></canvas>
+    <canvas id="streams-can" width="SIZEpx" height="SIZEpx"></canvas>
   </div>
 
   <div class="perf-cube-wrap">
-    <canvas id="perf-cube-can" width="600px" height="600px"></canvas>
+    <canvas id="perf-cube-can" width="SIZEpx" height="SIZEpx"></canvas>
   </div>
 
   <div id="usage-display" class="usage-display">
@@ -45,7 +53,7 @@
   </div>
 
   <div class="temp-chart-wrap">
-    <canvas id="temp-chart-can" width="600px" height="600px"></canvas>
+    <canvas id="temp-chart-can" width="SIZEpx" height="SIZEpx"></canvas>
   </div>
 </div>
 
