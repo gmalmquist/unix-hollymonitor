@@ -80,7 +80,7 @@ REQUIREMENTS = [
   GitRepo('tpm', 'https://github.com/gmalmquist/too-powerful-macros.git',
           build_command = ['./pants', 'bundle', 'src/java']),
   RemoteFile('jquery.js', 'http://code.jquery.com/jquery-1.11.2.min.js'),
-  RemoteFile('ko.js', 'http://knockoutjs.com/downloads/knockout-3.3.0.js'),
+  RemoteFile('knockout.js', 'http://knockoutjs.com/downloads/knockout-3.3.0.js'),
   RemoteFile('ggeom.js', 'https://raw.githubusercontent.com/gmalmquist/unix-hollymonitor/master/src/lib/ggeom.js'),
   RemoteFile('color.js', 'https://raw.githubusercontent.com/eligrey/color.js/master/color.min.js'),
 ]
@@ -129,7 +129,7 @@ def main(args):
     shutil.rmtree('bin')
   os.makedirs('bin')
 
-  tpm_command = ['java', '-jar', support_path('tpm', 'dist', 'tpm.jar'),]
+  tpm_command = ['java', '-jar', support_path('tpm', 'dist', 'tpm.jar'), '-skip', 'external', '-skip', 'macros']
 
   jar_path = support_path('tpm', 'dist', 'tpm.jar')
   if not os.path.exists(jar_path):
@@ -158,6 +158,13 @@ def main(args):
     shutil.copyfile(support_path(lib), os.path.join('bin', 'lib', lib))
 
   shutil.copytree(os.path.join('src', 'cgi'), bin_cgi)
+
+  for src in os.listdir('src'):
+    src = os.path.join('src', src)
+    if not os.path.isdir(src):
+      dst = os.path.join('bin', os.path.relpath(src, 'src'))
+      shutil.copyfile(src, dst)
+      bin_exec(['chmod', '+x', dst], pipe=False)
 
   if 'install' in VARS:
     for src in get_files('bin'):
