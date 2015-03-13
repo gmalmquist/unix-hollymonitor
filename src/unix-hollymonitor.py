@@ -49,6 +49,15 @@ class HollyHandler(BaseHTTPRequestHandler):
 
     content_type = 'text/html; charset=utf-8'
 
+    if self.path == '/' or self.path == '':
+      status_html = os.path.join(SCRIPT_DIR, 'html', 'status.html') 
+      if os.path.exists(status_html):
+        host = self.headers['Host']
+        self.send_response(301)
+        self.send_header('Location', 'http://{host}/html/status.html'.format(host=host))
+        self.end_headers()
+        return
+
     if os.path.exists(file_path):
       self.send_response(200)
       if os.path.isdir(file_path):
