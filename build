@@ -12,7 +12,7 @@ SUPPORT_DIR = '.build_tools'
 def support_path(*paths):
   return os.path.abspath(os.path.join(SUPPORT_DIR, *paths))
 
-def bin_exec(command, pipe=True, async=False, cwd=os.environ['PWD']):
+def bin_exec(command, pipe=True, async=False, cwd=os.path.abspath('.')):
   if pipe:
     p = Popen(command, stdout=PIPE, stderr=STDOUT, cwd=cwd)
     out, err = p.communicate()
