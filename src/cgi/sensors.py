@@ -36,8 +36,10 @@ def is_info(text):
 extra_infos = {}
 last_infos = {}
 
+
 for line in lines:
-  line = line.strip()
+  line = line.decode('unicode_escape').encode('ascii', 'ignore').strip()
+  line = re.sub('([0-9])C', r'\1 C', line)
   if device:
     if not line:
       device = None
