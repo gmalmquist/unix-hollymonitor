@@ -39,7 +39,11 @@ class RemoteFile(Requirement):
   def install(self):
     response = urllib2.urlopen(self.url)
     data = response.read()
-    outfile = open(support_path(self.name), 'wb')
+    path = support_path(self.name)
+    folder = os.path.dirname(path)
+    if not os.path.exists(folder):
+      os.makedirs(folder)
+    outfile = open(path, 'wb')
     outfile.write(data)
     outfile.close()
 
@@ -77,8 +81,10 @@ class GitRepo(Requirement):
     return bin_exec(self.build_command, cwd=support_path(self.name), pipe=False) == 0
 
 REQUIREMENTS = [
-  GitRepo('tpm', 'https://github.com/gmalmquist/too-powerful-macros.git',
-          build_command = ['./pants', 'bundle', 'src/java']),
+  #GitRepo('tpm', 'https://github.com/gmalmquist/too-powerful-macros.git',
+  #       build_command = ['./pants', 'bundle', 'src/java']),
+  RemoteFile(os.path.join('tpm', 'dist', 'tpm.jar'), 
+      'https://github.com/gmalmquist/unix-hollymonitor/releases/download/0.1/tpm.jar'),
   RemoteFile('jquery.js', 'http://code.jquery.com/jquery-1.11.2.min.js'),
   RemoteFile('knockout.js', 'http://knockoutjs.com/downloads/knockout-3.3.0.js'),
   RemoteFile('ggeom.js', 'https://raw.githubusercontent.com/gmalmquist/unix-hollymonitor/master/src/lib/ggeom.js'),
