@@ -13,7 +13,19 @@ Hollywood movie-style unix server monitoring interface, with both functional and
 
 Future features include easily configuring what source file scrolls in the background (currently this can be changed by editing a line in status.html).
 
-# Installation
+# Standalone Installation
+unix-hollymonitor can run in a standalone mode, where it spins up its own webserver to serve its own pages. This is much easier to do if you don't already have an apache server (or equivalent) set up.
+
+1. Make sure you have all the binaries required under *requirements*.
+2. Clone the unix-hollymonitor repo (or just download the files).
+3. Run the `build` script in the repo's root directory.
+4. Run `python bin/unix-hollymonitor.py`
+
+By default the webserver will open on port 8080. If you desire a different port, use the `port=xxxx` command-line argument. E.g.:
+
+`python bin/unix-hollymonitor.py port=8081`
+
+# Existing Webserver Integration
 unix-hollymonitor should be installed on the unix system to be monitored. 
 The system in question must have a web server (such as apache).
 
