@@ -165,9 +165,13 @@ function UpdateUsage() {
       dataType: 'json',
       timeout: 10000,
       success: function(data) {
-        Page.usages(data);
-        UpdateUsageGraph();
-        setTimeout(UpdateUsage, 1500);
+        if (typeof(Page.usages.stamp) === 'undefined'
+            || Page.usages.stamp != data.id) {
+          Page.usages.stamp = data.id;
+          Page.usages(data.data);
+          UpdateUsageGraph();
+        }
+        setTimeout(UpdateUsage, 5000);
       },
   });
 }

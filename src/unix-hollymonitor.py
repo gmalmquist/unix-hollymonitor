@@ -107,6 +107,12 @@ class HollyHandler(BaseHTTPRequestHandler):
 
     self.wfile.write(message)
 
+def start_cpu_recorder():
+  p = Popen([
+    'python', 
+    os.path.join(SCRIPT_DIR, 'cpu-reporter.py'), 
+    os.path.join(SCRIPT_DIR, 'cpu-usage.js')
+  ])
 
 def main(args, script_dir, script_path):
   global SCRIPT_DIR
@@ -128,6 +134,9 @@ def main(args, script_dir, script_path):
       print('Port "%s"' % VARS['port'], 'is not valid, must be a number.')
     else:
       port = int(VARS['port'])
+
+  print('Starting CPU recorder...')
+  start_cpu_recorder()
 
   print('Starting standalone webserver on port', port)
   print('Use the command-line argument port=xxxx to change the port.')
