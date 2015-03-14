@@ -2,25 +2,16 @@
 # -*- coding: UTF-8 -*-# enable debugging
 from __future__ import print_function
 from subprocess import Popen, PIPE, STDOUT
-import cgitb
 import json
 import os
 import re
 import sys
+import time
 
-cgitb.enable()    
-print("Content-Type: application/javascript;charset=utf-8")    
-print()
-
-if os.path.exists('cpu-usage.js'):
-  h = open('cpu-usage.js', 'r')
-  data = h.read()
-  h.close()
-  print(data)
-else:
+def get_json():
   frames = 2
   delay = 3
-  
+
   p = Popen(['mpstat', '-P', 'ALL', str(delay), str(frames)], stdout=PIPE, stderr=STDOUT)
   out, err = p.communicate()
   lines = out.split('\n')
@@ -51,10 +42,16 @@ else:
         'name': name,
         'usage': int(100*(usage))/100.0
       })
+ 
+  meta = { 'id': time.time(), 'data': cpus, }
+ 
+  return json.dumps(meta)
 
-  meta = {
-    'id': time.time(),
-    'data': cpus,
-  }
+out_path = sys.argv[1]
+while True:
+  dump = get_json()
+  h = open(out_path, 'w')
+  h.write(dump)
+  h.close()
+  time.sleep(2)
 
-  print(json.dumps(meta))
