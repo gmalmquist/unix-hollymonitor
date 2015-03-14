@@ -188,7 +188,7 @@ function UpdateProcs() {
     dataType: 'json',
     success: function(data) {
       Page.processes(data);
-      setTimeout(UpdateProcs, 2000);
+      setTimeout(UpdateProcs, 10000);
     },
   });
 }
